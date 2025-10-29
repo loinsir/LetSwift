@@ -112,6 +112,30 @@ extension SessionViewModel {
         }
     }
 
+    func autoStartLiveActivityIfNeeded() async {
+        // Skip if already running
+        if !Activity<PresentationAttributes>.activities.isEmpty {
+            print("✅ Live Activity already running, skipping auto-start")
+            return
+        }
+
+        print("🚀 Auto-starting Live Activity...")
+
+        // Check push notification permission
+        let hasPermission = await checkNotificationPermission()
+        if hasPermission {
+            await startLiveActivity()
+        } else {
+            // Request permission silently for auto-start
+            let granted = await requestNotificationPermission()
+            if granted {
+                await startLiveActivity()
+            } else {
+                print("⚠️ Push notification permission denied, skipping auto-start")
+            }
+        }
+    }
+
     private func checkNotificationPermission() async -> Bool {
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         return settings.authorizationStatus == .authorized
